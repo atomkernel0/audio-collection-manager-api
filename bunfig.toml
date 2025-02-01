@@ -1,0 +1,3 @@
+[watch]
+ignore = ["node_modules/**/*"]
+interval = 100

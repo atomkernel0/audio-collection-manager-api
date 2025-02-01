@@ -1,0 +1,5 @@
+node_modules
+.jest-cache
+coverage
+.env
+bun.lockb
