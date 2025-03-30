@@ -10,7 +10,7 @@ import {
   ListenedAlbumStats,
   ListenedSongStats,
 } from "../interfaces/user.interface";
-import { isValidObjectId, Types } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { AlbumsFormatUtils, sanitize } from "@/utils";
 import FavoriteAlbumModel from "@/models/favorite-album.model";
 import { LRUCache } from "lru-cache";
@@ -614,11 +614,11 @@ export class RecommendationsService {
 
     const selectedSongs = songMatches
       .sort(() => Math.random() - 0.5 * (1 - popularityWeight))
-      .slice(0, Math.floor(10 * weight));
+      .slice(0, Math.floor(6 * weight));
 
     const formattedSongWithAlbumInfoArray = selectedSongs.map(
       (songWithAlbumInfo): ISongWithAlbumInfo => {
-        const formattedTitle = songWithAlbumInfo.albumTitle
+        const formattedAlbumTitle = songWithAlbumInfo.albumTitle
           .replace(/^[^-]+ - /, "")
           .trim()
           .normalize("NFD")
@@ -630,7 +630,7 @@ export class RecommendationsService {
 
         return {
           ...songWithAlbumInfo,
-          title: formattedTitle,
+          albumTitle: formattedAlbumTitle,
           albumCover: formattedCover,
         };
       }
