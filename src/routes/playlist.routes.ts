@@ -13,7 +13,12 @@ const standardLimiter = rateLimit({
   db: new Map(),
   duration: 60000, // 1 minute
   max: 100,
-  id: (ctx: Context) => ctx.ip,
+  id: (ctx: Context) => {
+    const identifier = `${ctx.ip || ctx.request.ip || "unknown"}-${
+      ctx.headers["user-agent"] || "unknown"
+    }`;
+    return identifier;
+  },
   errorMessage: "Too many requests. Please try again later.",
 });
 
@@ -23,7 +28,12 @@ const strictLimiter = rateLimit({
   db: new Map(),
   duration: 60000,
   max: 20,
-  id: (ctx: Context) => ctx.ip,
+  id: (ctx: Context) => {
+    const identifier = `${ctx.ip || ctx.request.ip || "unknown"}-${
+      ctx.headers["user-agent"] || "unknown"
+    }`;
+    return identifier;
+  },
   errorMessage: "Too many requests. Please try again later.",
 });
 

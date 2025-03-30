@@ -12,13 +12,18 @@ const rateSettings = rateLimit({
   db: new Map(),
   duration: 60000,
   errorMessage: "Too many requests, please try again later.",
-  id: (ctx: Context) => ctx.ip,
+  id: (ctx: Context) => {
+    const identifier = `${ctx.ip || ctx.request.ip || "unknown"}-${
+      ctx.headers["user-agent"] || "unknown"
+    }`;
+    return identifier;
+  },
   headers: {
     remaining: "Rate-Limit-Remaining",
     reset: "Rate-Limit-Reset",
     total: "Rate-Limit-Total",
   },
-  max: 5,
+  max: 10,
   disableHeader: false,
 });
 

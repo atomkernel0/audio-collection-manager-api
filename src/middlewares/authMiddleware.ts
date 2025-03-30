@@ -37,8 +37,9 @@ export default async function verifyAuthorization(
       return;
     }
 
-    // Verify and decode token
-    jwt.verify(token, secret);
+    const decoded = jwt.verify(token, secret);
+
+    ctx.state.user = decoded;
 
     await next();
   } catch (error) {

@@ -11,13 +11,19 @@ export const createWrappedRouter = () => {
     db: new Map(),
     duration: 60000,
     errorMessage: "Too many requests, please try again later.",
-    id: (ctx: Context) => ctx.ip,
+    id: (ctx: Context) => {
+      // Use a combination of IP and user agent to better identify unique clients
+      const identifier = `${ctx.ip || ctx.request.ip || "unknown"}-${
+        ctx.headers["user-agent"] || "unknown"
+      }`;
+      return identifier;
+    },
     headers: {
       remaining: "Rate-Limit-Remaining",
       reset: "Rate-Limit-Reset",
       total: "Rate-Limit-Total",
     },
-    max: 5,
+    max: 20, // Increased from 5 to 20 requests per minute
     disableHeader: false,
   });
 
