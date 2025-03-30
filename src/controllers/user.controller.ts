@@ -152,7 +152,7 @@ export class UserController {
       ctx.status = result.status;
       ctx.body = result.body;
     } catch (err: any) {
-      logger.error("Error in listenSong:", err);
+      logger.error(`Error in listenSong: ${err}`);
       handleApiError(
         ctx,
         err instanceof Object ? err : ApiErrors.INTERNAL_ERROR
@@ -198,7 +198,7 @@ export class UserController {
       ctx.status = result.status;
       ctx.body = result.body;
     } catch (err: any) {
-      logger.error("Error in getListenedSongs:", err);
+      logger.error(`Error in getListenedSongs: ${err}`);
       handleApiError(
         ctx,
         err instanceof Object ? err : ApiErrors.INTERNAL_ERROR

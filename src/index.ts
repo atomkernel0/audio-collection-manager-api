@@ -122,13 +122,12 @@ class Server {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       connectTimeoutMS: 10000,
-      family: 4, // Force IPv4
+      family: 4,
     };
 
     try {
       logger.info("Connecting to MongoDB...");
 
-      // Connect with explicit promise handling
       await mongoose.connect(config.mongoUri, mongooseOptions);
 
       createRoutes(this.app);

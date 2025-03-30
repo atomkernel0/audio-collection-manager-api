@@ -28,7 +28,7 @@ export default function createToken(userId: string, username: string): string {
       username,
     };
 
-    const token = jwt.sign(payload, jwtSecret, { expiresIn: "88d" });
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: "100d" });
 
     return token;
   } catch (error) {

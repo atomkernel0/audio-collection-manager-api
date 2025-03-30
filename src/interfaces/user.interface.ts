@@ -9,13 +9,13 @@ import { IPlaylist, IPlaylistSong } from "./playlist.interface";
 export interface ListenedSongStats {
   songTitle: string;
   songFile: string;
-  albumId: Types.ObjectId;
+  albumId: string;
   playCount: number;
   listenHistory: Date[];
 }
 
 export interface ListenedAlbumStats {
-  albumId: Types.ObjectId;
+  albumId: string;
   playCount: number;
   listenHistory: Date[];
 }

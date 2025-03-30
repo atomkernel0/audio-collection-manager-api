@@ -19,10 +19,10 @@ import axios from "axios";
 import { UserService } from "@/services/user.service";
 import { UserModel } from "@/models/user.model";
 import { AlbumModel } from "@/models/album.model";
-import ListenedAlbumModel from "@/models/listenedAlbumModel";
-import FavoriteAlbumModel from "@/models/favoriteAlbumModel";
+import ListenedAlbumModel from "@/models/listened-album.model";
+import FavoriteAlbumModel from "@/models/favorite-album.model";
 import { ApiErrors } from "@/interfaces/api-errors.interface";
-import ListenedSongModel from "@/models/listenedSongModel";
+import ListenedSongModel from "@/models/listened-song.model";
 import {
   IUser,
   ListenedAlbumStats,

@@ -283,8 +283,9 @@ export class AlbumService {
    * @returns {Promise<string>} Hex color
    */
   public async getPrimaryColor(coverURL: string): Promise<string> {
-    const url = new URL(coverURL);
-    if (!url.hostname.endsWith(process.env.CDN_URL)) {
+    const decodedCoverURL = decodeURIComponent(coverURL);
+    const parsedCoverURL = new URL(decodedCoverURL);
+    if (parsedCoverURL.hostname !== new URL(process.env.CDN_URL!).hostname) {
       throw new Error(
         `Invalid URL: Only images from ${process.env.CDN_URL} are allowed`
       );

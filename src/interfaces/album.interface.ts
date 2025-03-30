@@ -30,11 +30,12 @@ export interface IGetArtists {
  */
 export enum MusicGenre {
   RAC = "RAC",
-  RIF = "RIF",
   NSBM = "NSBM",
-  OI = "Oi",
-  RAP = "Rap",
-  THRASH = "Thrash",
+  OI = "OI",
+  RAP = "RAP",
+  BALLADS = "BALLADS",
+  CHANT_MILITAIRE = "CHANT_MILITAIRE",
+  PSYCHEDELIC_ROCK = "PSYCHEDELIC_ROCK",
 }
 
 /**

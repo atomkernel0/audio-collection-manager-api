@@ -5,8 +5,7 @@
 
 import bcrypt from "bcrypt";
 import axios from "axios";
-import { Types } from "mongoose";
-import LRU from "lru-cache";
+import { LRUCache } from "lru-cache";
 import { logger } from "..";
 import {
   AlbumsFormatUtils,
@@ -16,10 +15,10 @@ import {
   sanitize,
   verifyToken,
 } from "../utils";
-import ListenedAlbumModel from "../models/listenedAlbumModel";
+import ListenedAlbumModel from "../models/listened-album.model";
 import { AlbumModel } from "../models/album.model";
-import FavoriteAlbumModel from "../models/favoriteAlbumModel";
-import ListenedSongModel from "../models/listenedSongModel";
+import FavoriteAlbumModel from "../models/favorite-album.model";
+import ListenedSongModel from "../models/listened-song.model";
 import { UserModel } from "../models/user.model";
 import { ApiErrors } from "../interfaces/api-errors.interface";
 
@@ -27,12 +26,12 @@ export class UserService {
   /**
    * Simple LRU cache for getUserInfo.
    */
-  private userInfoCache: LRU<string, any>;
+  private userInfoCache: LRUCache<string, any>;
 
   constructor() {
-    this.userInfoCache = new LRU<string, any>({
+    this.userInfoCache = new LRUCache<string, any>({
       max: 100,
-      maxAge: 5000 * 60, // 5min
+      ttl: 5000 * 60,
     });
   }
 
@@ -218,7 +217,7 @@ export class UserService {
       user.listenedSongs.push({
         songTitle,
         songFile,
-        albumId: new Types.ObjectId(albumId),
+        albumId,
         playCount: 1,
         listenHistory: [new Date()],
       });
@@ -226,14 +225,14 @@ export class UserService {
 
     // Update or create album stats
     const albumStats = user.listenedAlbums.find(
-      (stats) => stats.albumId.toString() === albumId
+      (stats) => stats.albumId === albumId
     );
     if (albumStats) {
       albumStats.playCount += 1;
       albumStats.listenHistory.push(new Date());
     } else {
       user.listenedAlbums.push({
-        albumId: new Types.ObjectId(albumId),
+        albumId,
         playCount: 1,
         listenHistory: [new Date()],
       });
@@ -290,11 +289,15 @@ export class UserService {
     const recentSongs = sortedSongs.slice(0, 30);
 
     // Get album info
-    const transformedSongs = await Promise.all(
-      recentSongs.map(async (song) => {
+    const songPromises = recentSongs.map(async (song) => {
+      try {
         const album = await AlbumModel.findById(song.albumId).lean().exec();
         if (!album) {
-          throw new Error(`Album not found for ID: ${song.albumId}`);
+          // Log a warning instead of throwing an error
+          logger.warn(
+            `Album not found for ID: ${song.albumId} while fetching listened songs for user ${userId}. Skipping this song.`
+          );
+          return null; // Indicate that this song should be skipped
         }
 
         return {
@@ -309,7 +312,18 @@ export class UserService {
           albumLang: album.lang,
           albumId: album._id,
         };
-      })
+      } catch (error) {
+        logger.error(
+          `Error fetching album details for song ${song.songTitle} (Album ID: ${song.albumId}) for user ${userId}:`,
+          error
+        );
+        return null; // Skip song on error
+      }
+    });
+
+    // Wait for all promises and filter out nulls (skipped songs)
+    const transformedSongs = (await Promise.all(songPromises)).filter(
+      (songInfo): songInfo is NonNullable<typeof songInfo> => songInfo !== null
     );
 
     return {
@@ -322,37 +336,52 @@ export class UserService {
    * Marks an album as "listened" by the user, saving in listenedAlbumModel.
    */
   public async listenAlbum(token: string, albumId: string) {
-    const userId = this.validateTokenOrThrow(token);
+    try {
+      const userId = this.validateTokenOrThrow(token);
 
-    const album = await AlbumModel.findById(albumId).lean().exec();
-    if (!album) {
+      const album = await AlbumModel.findById(albumId).lean().exec();
+      if (!album) {
+        throw {
+          ...ApiErrors.NOT_FOUND,
+          message: "Album not found",
+        };
+      }
+
+      const existingListenedAlbum = await ListenedAlbumModel.findOne({
+        userId,
+        "album._id": albumId,
+      }).exec();
+
+      if (existingListenedAlbum) {
+        existingListenedAlbum.listenedAt = new Date();
+        await existingListenedAlbum.save();
+      } else {
+        const albumToSave = {
+          ...album,
+          _id: albumId,
+        };
+
+        const newListenedAlbum = new ListenedAlbumModel({
+          userId,
+          album: albumToSave,
+          listenedAt: new Date(),
+        });
+
+        await newListenedAlbum.save();
+      }
+
+      return {
+        status: 201,
+        body: { message: "Album listened successfully" },
+      };
+    } catch (error) {
+      logger.error(`Error in listenAlbum: ${JSON.stringify(error)}`);
+      logger.error(error);
       throw {
-        ...ApiErrors.NOT_FOUND,
-        message: "Album not found",
+        ...ApiErrors.INTERNAL_ERROR,
+        message: "Error in listenAlbum",
       };
     }
-
-    const existingListenedAlbum = await ListenedAlbumModel.findOne({
-      userId,
-      "album._id": album._id,
-    }).exec();
-
-    if (existingListenedAlbum) {
-      existingListenedAlbum.listenedAt = new Date();
-      await existingListenedAlbum.save();
-    } else {
-      const newListenedAlbum = new ListenedAlbumModel({
-        userId,
-        album,
-        listenedAt: new Date(),
-      });
-      await newListenedAlbum.save();
-    }
-
-    return {
-      status: 201,
-      body: { message: "Album listened successfully" },
-    };
   }
 
   /**
